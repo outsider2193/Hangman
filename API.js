@@ -13,35 +13,36 @@ app.listen(5000, (req, res) => {
 });
 
 
+
+
 app.post("/user", async (req, res) => {
+    
     const role = "player";
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const passwordValidation = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
 
+
     const { firstName, lastName, email, password } = req.body;
 
     const userInfo = { firstName, lastName, email, password, role };
-    
-    if (firstName.length >= 3 && lastName.length >= 3 && emailPattern.test(email)) {
 
-        if (passwordValidation.test(password)) {
-
-            const newUser = await addnewUsertoDatabase(userInfo);
-            const { password: pwd, ...newUserWithoutPassword } = newUser;
-
-            res.status(200).json(newUserWithoutPassword);
-            return;
-
-        }
-
-        else {
-            res.status(400).json({ message: "Invalid password  Format!" });
-        }
-    } else {
-        res.status(400).json({ message: "Invalid name or email format!" });
+    if (firstName.length < 3) {
+        res.status(400).json({ message: "Firstname should be atleast 3 characters long!" });
     }
+    if (lastName.length < 3) {
+        res.status(400).json({ message: "lastname should be atleast 3 characters long!" });
+    }
+    if (!emailPattern.test(email)) {
+        res.status(400).json({ message: "Invalid email format!" });
+    }
+    if (!passwordValidation.test(password)) {
+        res.status(400).json({ message: "Password should contain atleast 1 lowercase,1 uppercase, 1 digit, 1 special character" });
+    }
+    const newUser = await addnewUsertoDatabase(userInfo);
+    const { password: pwd, ...newUserWithoutPassword } = newUser;
 
-
+    res.status(200).json(newUserWithoutPassword);
+    return;
 });
 
 
