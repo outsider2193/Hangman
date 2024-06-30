@@ -1,7 +1,8 @@
 const express = require("express");
 const app = express();
-const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase, wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase } = require("./database");
-const {getObscuredWord}= require("./hangman_utils");
+const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase, wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase, addnewUsertoDatabase } = require("./database");
+const { getObscuredWord } = require("./hangman_utils");
+
 
 app.use(express.json());
 
@@ -10,20 +11,56 @@ app.use(express.json());
 app.listen(5000, (req, res) => {
     console.log("Server is listening on port 5000...")
 });
+
+
+app.post("/user", async (req, res) => {
+    const role = "player";
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const passwordValidation = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
+
+    const { firstName, lastName, email, password } = req.body;
+
+    const userInfo = { firstName, lastName, email, password, role };
+    
+    if (firstName.length >= 3 && lastName.length >= 3 && emailPattern.test(email)) {
+
+        if (passwordValidation.test(password)) {
+
+            const newUser = await addnewUsertoDatabase(userInfo);
+            const { password: pwd, ...newUserWithoutPassword } = newUser;
+
+            res.status(200).json(newUserWithoutPassword);
+            return;
+
+        }
+
+        else {
+            res.status(400).json({ message: "Invalid password  Format!" });
+        }
+    } else {
+        res.status(400).json({ message: "Invalid name or email format!" });
+    }
+
+
+});
+
+
+
+
 app.get("/match/new", async (req, res) => {
 
     const randomWord = await getRandomWordObject();
-    const obscuredWord=getObscuredWord(randomWord.word,[])
-    
+    const obscuredWord = getObscuredWord(randomWord.word, [])
+
     const newMatch = {
         player_id: 1,
         word: randomWord.word,
         remaining_lives: 5,
         status: "running"
     }
-    const match =  await addnewMatchToDatabase(newMatch);
-    match.word= obscuredWord;
-    match.description= randomWord.description;
+    const match = await addnewMatchToDatabase(newMatch);
+    match.word = obscuredWord;
+    match.description = randomWord.description;
     res.status(200).json(match);
     return;
 
