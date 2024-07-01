@@ -125,11 +125,9 @@ async function addnewMatchToDatabase(newMatch) {
 
     try {
         // const data = await connection.execute("insert into my_words (word,Description) values('" + word.word + "','" + word.description + "');");
-        const data = await connection.execute(`insert into \`match\` (player_id,word,remaining_lives,status) values (${newMatch.player_id}, '${newMatch.word}',${newMatch. remaining_lives},'${newMatch.status}');`)
-        const insertId= (data[0].insertId);
-
-        
-        const [rows]= await connection.execute( "select *from \`match\` where id=?",[insertId]);
+        const data = await connection.execute(`insert into \`match\` (player_id,word,remaining_lives,status) values (${newMatch.player_id}, '${newMatch.word}',${newMatch.remaining_lives},'${newMatch.status}');`)
+        const insertId = (data[0].insertId);
+        const [rows] = await connection.execute("select *from \`match\` where id=?", [insertId]);
         // console.log(rows);
         return rows[0];
 
@@ -143,4 +141,28 @@ async function addnewMatchToDatabase(newMatch) {
 
 }
 
-module.exports = { addWordFromDatabase, deleteWordFromDatabase, wordExistsinDatabase, readWordsFromDatabase,getRandomWordObject, addnewMatchToDatabase};
+async function addnewUsertoDatabase(userInfo) {
+    let connection = await mySql.createConnection({
+        host: "localhost",
+        port: 3306,
+        user: "root",
+        password: "2024mysqlkushal",
+        database: "hangman",
+    });
+
+
+    try {
+        const data = await connection.execute(`insert into \`user\` (first_name ,last_name,email_id,password,role) values ('${userInfo.firstName}', '${userInfo.lastName}','${userInfo.email}','${userInfo.password}','${userInfo.role}' ); `)
+        const insertId = (data[0].insertId);
+        const [rows] = await connection.execute("select *from \`user\` where id=?", [insertId]);
+        return rows[0];
+
+    } catch (err) {
+        console.error("Error executing query", err);
+    } finally {
+        (await connection).end();
+    }
+}
+
+
+module.exports = { addWordFromDatabase, deleteWordFromDatabase, wordExistsinDatabase, readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase, addnewUsertoDatabase };
