@@ -11,4 +11,27 @@ function getObscuredWord(word, userInputArray) {
     return output;
 }
 
-module.exports={getObscuredWord}
+function isGuessCorrect(word, userGameInput) {
+
+    for (let i = 0; i < word.length; i++) {
+        if (userGameInput === word[i]) {
+            return true;
+        }
+
+    }
+    return false;
+
+}
+
+function isInputSingleCharAndLowerCaseEnglishCharOnly(inp) {
+    if (inp.length != 1) {
+        return false;
+    }
+
+    if (inp.charCodeAt(0) > 122 || inp.charCodeAt(0) < 97) {
+        return false;
+    }
+    return true;
+}
+
+module.exports={getObscuredWord,isGuessCorrect,isInputSingleCharAndLowerCaseEnglishCharOnly}
