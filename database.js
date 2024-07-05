@@ -164,7 +164,7 @@ async function addnewUsertoDatabase(userInfo) {
     }
 }
 
-async function addNewGuesstoDatabase(guessWord,matchId) {
+async function addNewGuesstoDatabase(guessWord, matchId) {
     let connection = await mySql.createConnection({
         host: "localhost",
         port: 3306,
@@ -177,10 +177,40 @@ async function addNewGuesstoDatabase(guessWord,matchId) {
         [guessWord.guess, matchId]
     )
     return data;
-    
+
 
 }
 
+async function readMatchFromDatabase(matchId) {
+    let connection = await mySql.createConnection({
+        host: "localhost",
+        port: 3306,
+        user: "root",
+        password: "2024mysqlkushal",
+        database: "hangman",
+    });
+
+    const data = await connection.execute(`select * from \`match\` where id= ?`, [matchId]);
+    return data[0];
+}
+
+async function readGuessesFromDatabase(matchId) {
+    let connection = await mySql.createConnection({
+        host: "localhost",
+        port: 3306,
+        user: "root",
+        password: "2024mysqlkushal",
+        database: "hangman",
+    });
+
+    const data = await connection.execute(`select guess from  guesses where match_id=?`,[matchId],);
+    return data[0];
+}
 
 
-module.exports = { addWordFromDatabase, deleteWordFromDatabase, wordExistsinDatabase, readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase, addnewUsertoDatabase, addNewGuesstoDatabase };
+module.exports = {
+    addWordFromDatabase, deleteWordFromDatabase, wordExistsinDatabase,
+    readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase,
+    addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
+    readGuessesFromDatabase
+};

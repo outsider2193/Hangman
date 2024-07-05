@@ -1,8 +1,11 @@
 const bcrypt = require("bcrypt");
 const express = require("express");
 const app = express();
-const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase, wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase, addnewUsertoDatabase, addNewGuesstoDatabase } = require("./database");
-const { getObscuredWord, isGuessCorrect, isInputSingleCharAndLowerCaseEnglishCharOnly } = require("./hangman_utils");
+const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
+    wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase,
+    addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase, readGuessesFromDatabase } = require("./database");
+
+const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly } = require("./hangman_utils");
 
 
 app.use(express.json());
@@ -50,19 +53,9 @@ app.post("/user", async (req, res) => {
     return;
 });
 
-app.post("/match/:matchId/guess", async (req, res) => {
 
-    const { guess } = req.body;
-    const { matchId } = req.params;
-    const guessWord = { guess };
-    const isValidChar = isInputSingleCharAndLowerCaseEnglishCharOnly(guessWord.guess);
-    if (!isValidChar) {
-        return res.status(400).json({ message: "Invalid format!" })
-    }
-    const newGuess = await addNewGuesstoDatabase(guessWord, matchId)
-    res.status(200).json({ message: "Accepted" });
 
-})
+
 
 
 
@@ -80,11 +73,41 @@ app.get("/match/new", async (req, res) => {
     }
     const match = await addnewMatchToDatabase(newMatch);
     match.word = obscuredWord;
-
+    match.description = randomWord.description;
     res.status(200).json(match);
     return;
 
 })
+
+app.post("/match/:matchId/guess", async (req, res) => {
+
+    const { guess } = req.body;
+    const { matchId } = req.params;
+    const guessWord = { guess };
+    const isValidChar = isInputSingleCharAndLowerCaseEnglishCharOnly(guessWord.guess);
+    if (!isValidChar) {
+        return res.status(400).json({ message: "Invalid format!" })
+    }
+    const newGuess = await addNewGuesstoDatabase(guessWord, matchId)
+    res.status(200).json({ message: "Accepted" });
+
+});
+
+app.get("/match/:matchId", async (req, res) => {
+    const { matchId } = req.params;
+    const guesses= await readGuessesFromDatabase(matchId)
+    const currentMatch = await readMatchFromDatabase(matchId);
+    const newGuess=[];
+    for(let i=0;i<guesses.length;i++){
+        arrOfStr=guesses[i].guess;
+        newGuess.push(arrOfStr)
+    }
+    const match=currentMatch[0];
+    const obscuredWord = getObscuredWord(match.word, newGuess)
+    match.word = obscuredWord;
+    res.status(200).json(match);
+    return;
+});
 
 
 
