@@ -5,7 +5,7 @@ const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase, readGuessesFromDatabase } = require("./database");
 
-const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly } = require("./hangman_utils");
+const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect } = require("./hangman_utils");
 
 
 app.use(express.json());
@@ -95,15 +95,29 @@ app.post("/match/:matchId/guess", async (req, res) => {
 
 app.get("/match/:matchId", async (req, res) => {
     const { matchId } = req.params;
-    const guesses= await readGuessesFromDatabase(matchId)
+    const guesses = await readGuessesFromDatabase(matchId)
     const currentMatch = await readMatchFromDatabase(matchId);
-    const newGuess=[];
-    for(let i=0;i<guesses.length;i++){
-        arrOfStr=guesses[i].guess;
+    const newGuess = [];
+    for (let i = 0; i < guesses.length; i++) {
+        let arrOfStr = guesses[i].guess;
         newGuess.push(arrOfStr)
     }
-    const match=currentMatch[0];
-    const obscuredWord = getObscuredWord(match.word, newGuess)
+    const match = currentMatch[0];
+    const obscuredWord = getObscuredWord(match.word, newGuess);
+    for (let i = 0; i < newGuess.length; i++) {
+        let guessArray = newGuess[i];
+        if (isInputSingleCharAndLowerCaseEnglishCharOnly(guessArray)) {
+            if (!isGuessCorrect(match.word, guessArray)) {
+                match.remaining_lives--;
+                if (match.remaining_lives == 0) {
+                    return res.status(200).json({ message: "You lost!" });
+                }
+            }
+        }
+    }
+    if (obscuredWord === match.word) {
+        return res.status(200).json({ message: "You have won!" });
+    }
     match.word = obscuredWord;
     res.status(200).json(match);
     return;
