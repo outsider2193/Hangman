@@ -203,14 +203,60 @@ async function readGuessesFromDatabase(matchId) {
         database: "hangman",
     });
 
-    const data = await connection.execute(`select guess from  guesses where match_id=?`,[matchId],);
+    const data = await connection.execute(`select guess from  guesses where match_id=?`, [matchId],);
     return data[0];
 }
+
+async function updateRemainingLivestoDatabase(matchId, remainingLives) {
+    let connection = await mySql.createConnection({
+        host: "localhost",
+        port: 3306,
+        user: "root",
+        password: "2024mysqlkushal",
+        database: "hangman",
+    });
+    try {
+        const [rows] = await connection.execute(
+            `UPDATE \`match\` SET remaining_lives = ? WHERE id = ?`,
+            [remainingLives, matchId]
+        );
+        return rows;
+    } catch (err) {
+        console.error("Error executing query", err);
+    } finally {
+        await connection.end();
+    }
+}
+async function updateStatustoDatabase(matchId, status) {
+    let connection = await mySql.createConnection({
+        host: "localhost",
+        port: 3306,
+        user: "root",
+        password: "2024mysqlkushal",
+        database: "hangman",
+    });
+
+    try {
+        const [rows] = await connection.execute(
+            `UPDATE \`match\` set status= ? WHERE id= ?`,
+            [status, matchId]
+
+        );
+        return rows;
+    } catch (err) {
+        console.error("Error executing query", err);
+    } finally {
+        await connection.end();
+    }
+
+}
+
+
 
 
 module.exports = {
     addWordFromDatabase, deleteWordFromDatabase, wordExistsinDatabase,
     readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
-    readGuessesFromDatabase
+    readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase
 };
