@@ -251,7 +251,7 @@ async function updateStatustoDatabase(matchId, status) {
 
 }
 
-async function readUserFromDatabase(email) {
+async function readUserFromDatabaseByEmail(email) {
     let connection = await mySql.createConnection({
         host: "localhost",
         port: 3306,
@@ -288,5 +288,5 @@ module.exports = {
     readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
-    readUserFromDatabase
+    readUserFromDatabaseByEmail
 };

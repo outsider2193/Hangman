@@ -5,14 +5,10 @@ const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
-    readUserFromDatabase } = require("./database");
-
+    readUserFromDatabaseByEmail } = require("./database");
 const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect } = require("./hangman_utils");
 
-
 app.use(express.json());
-
-
 
 app.listen(5000, (req, res) => {
     console.log("Server is listening on port 5000...")
@@ -20,9 +16,8 @@ app.listen(5000, (req, res) => {
 
 
 
-
+const fixedSalt = "$2b$10$6cVYpoC1YmEYs1Hs9E2RJ."
 app.post("/user/register", async (req, res) => {
-    const fixedSalt = "$2b$10$6cVYpoC1YmEYs1Hs9E2RJ."
     const role = "player";
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const passwordValidation = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
@@ -55,14 +50,17 @@ app.post("/user/register", async (req, res) => {
     return;
 });
 app.post("/user/login", async (req, res) => {
-    const fixedSalt = "$2b$10$6cVYpoC1YmEYs1Hs9E2RJ."
+
     const { email, password } = req.body;
-    const user = await readUserFromDatabase(email);
+    const user = await readUserFromDatabaseByEmail(email);
     const hashedPw = await bcrypt.hash(password, fixedSalt)
+    if (!user) {
+        return res.status(401).json({ message: "no such user exists" });
+    }
     if (user.password == hashedPw) {
         return res.status(200).json({ message: "user matches" })
     }
-    return res.status(401).json({ message: "no such user exists" });
+    return res.status(401).json({ message: "Incorrect  Password" });
 })
 app.get("/match/new", async (req, res) => {
 
