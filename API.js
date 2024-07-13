@@ -4,14 +4,11 @@ const app = express();
 const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
-    readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase } = require("./database");
-
+    readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
+    readUserFromDatabaseByEmail } = require("./database");
 const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect } = require("./hangman_utils");
 
-
 app.use(express.json());
-
-
 
 app.listen(5000, (req, res) => {
     console.log("Server is listening on port 5000...")
@@ -19,9 +16,8 @@ app.listen(5000, (req, res) => {
 
 
 
-
-app.post("/user", async (req, res) => {
-    const fixedSalt = "$2b$10$6cVYpoC1YmEYs1Hs9E2RJ."
+const fixedSalt = "$2b$10$6cVYpoC1YmEYs1Hs9E2RJ."
+app.post("/user/register", async (req, res) => {
     const role = "player";
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const passwordValidation = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
@@ -53,6 +49,19 @@ app.post("/user", async (req, res) => {
     res.status(200).json(newUserWithoutPassword);
     return;
 });
+app.post("/user/login", async (req, res) => {
+
+    const { email, password } = req.body;
+    const user = await readUserFromDatabaseByEmail(email);
+    const hashedPw = await bcrypt.hash(password, fixedSalt)
+    if (!user) {
+        return res.status(401).json({ message: "no such user exists" });
+    }
+    if (user.password == hashedPw) {
+        return res.status(200).json({ message: "user matches" })
+    }
+    return res.status(401).json({ message: "Incorrect  Password" });
+})
 app.get("/match/new", async (req, res) => {
 
     const randomWord = await getRandomWordObject();
@@ -78,6 +87,7 @@ app.post("/match/:matchId/guess", async (req, res) => {
     const { guess } = req.body;
     const { matchId } = req.params;
     const guessWord = { guess };
+
     const currentMatch = await readMatchFromDatabase(matchId);
     const match = currentMatch[0];
     const isValidChar = isInputSingleCharAndLowerCaseEnglishCharOnly(guessWord.guess);

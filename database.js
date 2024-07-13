@@ -251,6 +251,35 @@ async function updateStatustoDatabase(matchId, status) {
 
 }
 
+async function readUserFromDatabaseByEmail(email) {
+    let connection = await mySql.createConnection({
+        host: "localhost",
+        port: 3306,
+        user: "root",
+        password: "2024mysqlkushal",
+        database: "hangman",
+    });
+
+    try {
+
+        const [rows] = await connection.execute(`
+            SELECT * FROM \`user\`
+            WHERE email_id = ?
+            ORDER BY id DESC
+            LIMIT 1`, [email]);
+
+
+        return rows.length > 0 ? rows[0] : null;
+    } catch (err) {
+        console.error("Error executing query", err);
+    } finally {
+        await connection.end();
+    }
+
+}
+
+
+
 
 
 
@@ -258,5 +287,6 @@ module.exports = {
     addWordFromDatabase, deleteWordFromDatabase, wordExistsinDatabase,
     readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
-    readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase
+    readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
+    readUserFromDatabaseByEmail
 };
