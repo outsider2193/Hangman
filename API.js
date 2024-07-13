@@ -87,7 +87,6 @@ app.post("/match/:matchId/guess", async (req, res) => {
     const { guess } = req.body;
     const { matchId } = req.params;
     const guessWord = { guess };
-
     const currentMatch = await readMatchFromDatabase(matchId);
     const match = currentMatch[0];
     const isValidChar = isInputSingleCharAndLowerCaseEnglishCharOnly(guessWord.guess);
@@ -99,7 +98,9 @@ app.post("/match/:matchId/guess", async (req, res) => {
         return res.status(400).json({ message: "Invalid format!" })
     }
     await addNewGuesstoDatabase(guessWord, matchId);
+
     if (guessCheck) {
+      
         const guesses = await readGuessesFromDatabase(matchId)
         const newGuess = [];
         for (let i = 0; i < guesses.length; i++) {

@@ -283,6 +283,7 @@ async function readUserFromDatabaseByEmail(email) {
 
 
 
+
 module.exports = {
     addWordFromDatabase, deleteWordFromDatabase, wordExistsinDatabase,
     readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase,
