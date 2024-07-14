@@ -278,7 +278,55 @@ async function readUserFromDatabaseByEmail(email) {
 
 }
 
+async function readUserFromDatabase(playerId) {
+    let connection = await mySql.createConnection({
+        host: "localhost",
+        port: 3306,
+        user: "root",
+        password: "2024mysqlkushal",
+        database: "hangman",
+    });
 
+    try {
+
+        const [rows] = await connection.execute
+            (`
+        SELECT * FROM \`user\`where id=?
+            `, [playerId]);
+        // console.log(rows);
+        return rows[0];
+    } catch (err) {
+        console.error("Error executing query", err);
+    } finally {
+        await connection.end();
+    }
+
+}
+
+
+async function updateScoreToDatabase(score, playerId) {
+    let connection = await mySql.createConnection({
+        host: "localhost",
+        port: 3306,
+        user: "root",
+        password: "2024mysqlkushal",
+        database: "hangman",
+    });
+
+    try {
+        const [rows] = await connection.execute(`
+            update \`user\` 
+            set score=?
+            where id=? `, [score, playerId])
+        return rows;
+    } catch (err) {
+        console.error("Error executing query", err);
+    } finally {
+        await connection.end();
+    }
+
+
+}
 
 
 
@@ -288,5 +336,5 @@ module.exports = {
     readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
-    readUserFromDatabaseByEmail
+    readUserFromDatabaseByEmail, readUserFromDatabase,updateScoreToDatabase
 };

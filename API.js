@@ -5,7 +5,7 @@ const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
-    readUserFromDatabaseByEmail } = require("./database");
+    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase } = require("./database");
 const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect } = require("./hangman_utils");
 
 app.use(express.json());
@@ -87,19 +87,29 @@ app.post("/match/:matchId/guess", async (req, res) => {
     const { guess } = req.body;
     const { matchId } = req.params;
     const guessWord = { guess };
-
     const currentMatch = await readMatchFromDatabase(matchId);
+
     const match = currentMatch[0];
-    const isValidChar = isInputSingleCharAndLowerCaseEnglishCharOnly(guessWord.guess);
-    const guessCheck = isGuessCorrect(match.word, guessWord.guess);
     if (match.status != "running") {
         res.status(400).json({ message: "Match Ended" })
     }
+    const isValidChar = isInputSingleCharAndLowerCaseEnglishCharOnly(guessWord.guess);
     if (!isValidChar) {
         return res.status(400).json({ message: "Invalid format!" })
     }
+    const guessCheck = isGuessCorrect(match.word, guessWord.guess);
+    const guesses = await readGuessesFromDatabase(matchId)
+    for (let i = 0; i < guesses.length; i++) {
+        let arrOfStr = guesses[i].guess;
+        if (arrOfStr == guessWord.guess) {
+            return res.status(400).json({ message: "already guessed" })
+        }
+    }
     await addNewGuesstoDatabase(guessWord, matchId);
+    const user = await readUserFromDatabase(1);
     if (guessCheck) {
+        user.score++;
+        await updateScoreToDatabase(user.score, 1)
         const guesses = await readGuessesFromDatabase(matchId)
         const newGuess = [];
         for (let i = 0; i < guesses.length; i++) {
@@ -117,8 +127,10 @@ app.post("/match/:matchId/guess", async (req, res) => {
     }
 
     else {
+        user.score--;
+        await updateScoreToDatabase(user.score, 1)
         match.remaining_lives--;
-        const newLives = await updateRemainingLivestoDatabase(matchId, match.remaining_lives);
+        await updateRemainingLivestoDatabase(matchId, match.remaining_lives);
         if (match.remaining_lives == 0) {
             match.status = "lost"
             await updateStatustoDatabase(matchId, match.status);
