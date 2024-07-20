@@ -33,5 +33,22 @@ function isInputSingleCharAndLowerCaseEnglishCharOnly(inp) {
     }
     return true;
 }
+const jwt = require('jsonwebtoken');
+const secretKey = 'your-very-secure-secret-key';
+function validateToken(bearerToken) {
+    if (bearerToken) {
+        try {
+            const token = bearerToken.replace("Bearer ", "");
+            const decoded = jwt.verify(token, secretKey);
 
-module.exports={getObscuredWord,isGuessCorrect,isInputSingleCharAndLowerCaseEnglishCharOnly}
+            return decoded;
+        } catch (err) {
+            return null;
+        }
+    }
+    return null;
+
+
+}
+
+module.exports = { getObscuredWord, isGuessCorrect, isInputSingleCharAndLowerCaseEnglishCharOnly, validateToken }
