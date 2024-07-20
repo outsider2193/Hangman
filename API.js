@@ -1,4 +1,7 @@
+const jwt = require('jsonwebtoken');
+const secretKey = 'your-very-secure-secret-key';
 const bcrypt = require("bcrypt");
+const fixedSalt = "$2b$10$6cVYpoC1YmEYs1Hs9E2RJ."
 const express = require("express");
 const app = express();
 const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
@@ -6,7 +9,8 @@ const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
     readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase } = require("./database");
-const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect } = require("./hangman_utils");
+
+const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect, validateToken } = require("./hangman_utils");
 
 app.use(express.json());
 
@@ -14,9 +18,6 @@ app.listen(5000, (req, res) => {
     console.log("Server is listening on port 5000...")
 });
 
-
-
-const fixedSalt = "$2b$10$6cVYpoC1YmEYs1Hs9E2RJ."
 app.post("/user/register", async (req, res) => {
     const role = "player";
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -49,26 +50,39 @@ app.post("/user/register", async (req, res) => {
     res.status(200).json(newUserWithoutPassword);
     return;
 });
+
 app.post("/user/login", async (req, res) => {
 
     const { email, password } = req.body;
     const user = await readUserFromDatabaseByEmail(email);
-    const hashedPw = await bcrypt.hash(password, fixedSalt)
+    const hashedPw = await bcrypt.hash(password, fixedSalt);
+
     if (!user) {
         return res.status(401).json({ message: "no such user exists" });
     }
     if (user.password == hashedPw) {
-        return res.status(200).json({ message: "user matches" })
+        const payload = {
+            userId: user.id,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role
+        };
+        const token = jwt.sign(payload, secretKey, { expiresIn: '1y' });
+        return res.status(200).json({ token });
     }
+
     return res.status(401).json({ message: "Incorrect  Password" });
 })
 app.get("/match/new", async (req, res) => {
-
+    const decodedToken = validateToken(req.headers.authorization);
+    if (decodedToken == null) {
+        return res.status(401).json({ message: "Authorization token missing" })
+    }
     const randomWord = await getRandomWordObject();
     const obscuredWord = getObscuredWord(randomWord.word, [])
 
     const newMatch = {
-        player_id: 1,
+        player_id: decodedToken.userId,
         word: randomWord.word,
         description: randomWord.description,
         remaining_lives: 5,
@@ -83,6 +97,10 @@ app.get("/match/new", async (req, res) => {
 })
 
 app.post("/match/:matchId/guess", async (req, res) => {
+    const decodedToken = validateToken(req.headers.authorization);
+    if (decodedToken == null) {
+        return res.status(401).json({ message: "Authorization token missing" })
+    }
 
     const { guess } = req.body;
     const { matchId } = req.params;
@@ -145,6 +163,10 @@ app.post("/match/:matchId/guess", async (req, res) => {
 });
 
 app.get("/match/:matchId", async (req, res) => {
+    const decodedToken = validateToken(req.headers.authorization);
+    if (decodedToken == null) {
+        return res.status(401).json({ message: "Authorization token missing" })
+    }
     const { matchId } = req.params;
     const guesses = await readGuessesFromDatabase(matchId)
     const currentMatch = await readMatchFromDatabase(matchId);
@@ -167,11 +189,27 @@ app.get("/home", (req, res) => {
 })
 
 app.get("/words", async (req, res) => {
+    const decodedToken = validateToken(req.headers.authorization);
+    if (decodedToken == null) {
+        return res.status(401).json({ message: "Authorization token missing" })
+    }
+    if (decodedToken.role != "admin") {
+        return res.status(403).json({ message: "Only allowed for admins" })
+    }
+
     const words = await readWordsFromDatabase();
     res.status(200).json(words); return;
 });
 
 app.post("/words", async (req, res) => {
+    const decodedToken = validateToken(req.headers.authorization);
+    if (decodedToken == null) {
+        return res.status(401).json({ message: "Authorization token missing" })
+    }
+    if (decodedToken.role != "admin") {
+        return res.status(403).json({ message: "Only allowed for admins" })
+    }
+
     const { word, description } = req.body;
     let regx = /^[a-z]+$/g;
 
@@ -199,6 +237,13 @@ app.post("/words", async (req, res) => {
 })
 
 app.delete("/words/:word", async (req, res) => {
+    const decodedToken = validateToken(req.headers.authorization);
+    if (decodedToken == null) {
+        return res.status(401).json({ message: "Authorization token missing" })
+    }
+    if (decodedToken.role != "admin") {
+        return res.status(403).json({ message: "Only allowed for admins" })
+    }
 
     const { word } = req.params;
 
