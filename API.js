@@ -25,6 +25,7 @@ app.post("/user/register", async (req, res) => {
 
 
     const { firstName, lastName, email, password } = req.body;
+
     if (firstName.length < 3) {
         return res.status(400).json({ message: "Firstname should be atleast 3 characters long!" });
     }
@@ -37,11 +38,17 @@ app.post("/user/register", async (req, res) => {
     if (!passwordValidation.test(password)) {
         return res.status(400).json({ message: "Password should contain atleast 1 lowercase,1 uppercase, 1 digit, 1 special character" });
     }
+    const prevEmailId = await readUserFromDatabaseByEmail(email);
+    if (prevEmailId != null) {
+        return res.status(400).json({ message: "User already exists!" });
+    }
 
     const hash = await bcrypt.hash(password, fixedSalt);
 
 
     const userInfo = { firstName, lastName, email, password: hash, role };
+
+
 
 
     const newUser = await addnewUsertoDatabase(userInfo);
