@@ -1,3 +1,4 @@
+const cors = require("cors")
 const jwt = require('jsonwebtoken');
 const secretKey = 'your-very-secure-secret-key';
 const bcrypt = require("bcrypt");
@@ -8,18 +9,20 @@ const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
-    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase } = require("./database");
+    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase,
+    getMatchFromDatabase } = require("./database");
 
 const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect, validateToken } = require("./hangman_utils");
 
 app.use(express.json());
+app.use(cors());
 
 app.listen(5000, (req, res) => {
     console.log("Server is listening on port 5000...")
 });
 
 app.post("/user/register", async (req, res) => {
-    const role = "player";
+    const role = "admin";
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const passwordValidation = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
 
@@ -131,7 +134,7 @@ app.post("/match/:matchId/guess", async (req, res) => {
         }
     }
     await addNewGuesstoDatabase(guessWord, matchId);
-    const user = await readUserFromDatabase(1);
+    const user = await readUserFromDatabase(decodedToken.userId);
     if (guessCheck) {
         user.score++;
         await updateScoreToDatabase(user.score, 1)
@@ -188,7 +191,25 @@ app.get("/match/:matchId", async (req, res) => {
     res.status(200).json(match);
     return;
 });
+app.get("/matches", async (req, res) => {
+    const decodedToken = validateToken(req.headers.authorization);
+    if (decodedToken == null) {
+        return res.status(401).json({ message: "Authorization token missing" })
+    }
+    const playerId = decodedToken.userId;
+    const randomWord = await getRandomWordObject();
+    const obscuredWord = getObscuredWord(randomWord.word, [])
+    const match = await getMatchFromDatabase(playerId);
 
+    // match[0].word = obscuredWord;
+    const obscuredMatch = match.map(wordObj => {
+        return {
+            ...wordObj,
+            word: getObscuredWord(wordObj.word, [])
+        };
+    });
+    res.status(200).json(obscuredMatch);
+})
 
 
 app.get("/home", (req, res) => {
