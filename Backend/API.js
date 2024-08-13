@@ -191,24 +191,28 @@ app.get("/match/:matchId", async (req, res) => {
     res.status(200).json(match);
     return;
 });
-app.get("/matches", async (req, res) => {
+app.get("/match", async (req, res) => {
     const decodedToken = validateToken(req.headers.authorization);
     if (decodedToken == null) {
         return res.status(401).json({ message: "Authorization token missing" })
     }
     const playerId = decodedToken.userId;
-    const randomWord = await getRandomWordObject();
-    const obscuredWord = getObscuredWord(randomWord.word, [])
-    const match = await getMatchFromDatabase(playerId);
+    const matches = await getMatchFromDatabase(playerId);
+    const obscuredMatches = [];
+    for (let i = 0; i < matches.length; i++) {
+        const currentMatch = matches[i];
+        const guesses = await readGuessesFromDatabase(currentMatch.id);
+        const newGuess = [];
+        for (let j = 0; j < guesses.length; j++) {
+            let arrOfStr = guesses[j].guess;
+            newGuess.push(arrOfStr)
+        }
+        const obscuredWord = getObscuredWord(currentMatch.word, newGuess);
+        currentMatch.word = obscuredWord;
+        obscuredMatches.push(currentMatch);
+    }
 
-    // match[0].word = obscuredWord;
-    const obscuredMatch = match.map(wordObj => {
-        return {
-            ...wordObj,
-            word: getObscuredWord(wordObj.word, [])
-        };
-    });
-    res.status(200).json(obscuredMatch);
+    res.status(200).json(obscuredMatches);
 })
 
 
