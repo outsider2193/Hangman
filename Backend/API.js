@@ -1,3 +1,4 @@
+const cors = require("cors")
 const jwt = require('jsonwebtoken');
 const secretKey = 'your-very-secure-secret-key';
 const bcrypt = require("bcrypt");
@@ -8,18 +9,20 @@ const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
-    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase } = require("./database");
+    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase,
+    getMatchFromDatabase } = require("./database");
 
 const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect, validateToken } = require("./hangman_utils");
 
 app.use(express.json());
+app.use(cors());
 
 app.listen(5000, (req, res) => {
     console.log("Server is listening on port 5000...")
 });
 
 app.post("/user/register", async (req, res) => {
-    const role = "player";
+    const role = "admin";
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const passwordValidation = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
 
@@ -131,7 +134,7 @@ app.post("/match/:matchId/guess", async (req, res) => {
         }
     }
     await addNewGuesstoDatabase(guessWord, matchId);
-    const user = await readUserFromDatabase(1);
+    const user = await readUserFromDatabase(decodedToken.userId);
     if (guessCheck) {
         user.score++;
         await updateScoreToDatabase(user.score, 1)
@@ -188,7 +191,29 @@ app.get("/match/:matchId", async (req, res) => {
     res.status(200).json(match);
     return;
 });
+app.get("/match", async (req, res) => {
+    const decodedToken = validateToken(req.headers.authorization);
+    if (decodedToken == null) {
+        return res.status(401).json({ message: "Authorization token missing" })
+    }
+    const playerId = decodedToken.userId;
+    const matches = await getMatchFromDatabase(playerId);
+    const obscuredMatches = [];
+    for (let i = 0; i < matches.length; i++) {
+        const currentMatch = matches[i];
+        const guesses = await readGuessesFromDatabase(currentMatch.id);
+        const newGuess = [];
+        for (let j = 0; j < guesses.length; j++) {
+            let arrOfStr = guesses[j].guess;
+            newGuess.push(arrOfStr)
+        }
+        const obscuredWord = getObscuredWord(currentMatch.word, newGuess);
+        currentMatch.word = obscuredWord;
+        obscuredMatches.push(currentMatch);
+    }
 
+    res.status(200).json(obscuredMatches);
+})
 
 
 app.get("/home", (req, res) => {
