@@ -29,11 +29,12 @@ function Gamescreen() {
         })
     }
 
-    const isValid = /^[a-z]$/;
+
 
     function handleGuesses(event) {
         const value = event.target.value;
         setGuess(value);
+        const isValid = /^[a-z]$/;
         if (!isValid.test(value)) {
             setError("Invalid format!")
 
@@ -43,7 +44,7 @@ function Gamescreen() {
 
         }
     }
-
+    const isValidGuess = /^[a-z]$/.test(guess);
 
     function toggleSubmmit() {
         const guessWord = {
@@ -82,7 +83,7 @@ function Gamescreen() {
                         transition: Bounce,
                     })
                 }
-           
+
             }).catch(error => {
                 if (error.response.status === 400) {
                     toast.error("already guessed", {
@@ -98,7 +99,7 @@ function Gamescreen() {
                     })
                 }
             })
-       
+
     }
 
 
@@ -113,7 +114,7 @@ function Gamescreen() {
             <br />
             <TextField variant="outlined" label="Enter a Guess" value={guess} onChange={handleGuesses} ></TextField>
             {guessError && <p style={{ color: 'red' }}>{guessError}</p>}
-            <Button variant="contained" onClick={toggleSubmmit}>Submit </Button>
+            <Button variant="contained" onClick={toggleSubmmit} disabled={!isValidGuess} >Submit </Button>
             <ToastContainer />
         </Container>
     )
