@@ -1,8 +1,9 @@
 import { Button, Container, TextField, Typography } from "@mui/material"
 import axios from "axios"
-import { useState } from "react";
-import { useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 import { ToastContainer, toast, Bounce } from 'react-toastify';
+
 
 function Gamescreen() {
     const token = localStorage.getItem("authToken");
@@ -12,7 +13,12 @@ function Gamescreen() {
     const [description, setDescription] = useState();
     const [guess, setGuess] = useState();
     const [guessError, setError] = useState();
+    const [isMatchOver, setIsMatchOver] = useState(false);
+
+    const navigate = useNavigate();
     let { matchId } = useParams()
+
+
 
     function handleMatch() {
         axios.get(`http://localhost:5000/match/${matchId}`, {
@@ -29,6 +35,32 @@ function Gamescreen() {
         })
     }
 
+    useEffect(() => {
+
+        handleMainMenu();
+    }, [matchId]);
+
+    function handleMainMenu() {
+
+        axios.get(`http://localhost:5000/match/${matchId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }).then(response => {
+
+            if (response.data.status !== "running") {
+                setIsMatchOver(true)
+
+            }
+            else {
+                setIsMatchOver(false);
+            }
+
+
+        })
+    }
+
+
 
 
     function handleGuesses(event) {
@@ -38,9 +70,11 @@ function Gamescreen() {
         if (!isValid.test(value)) {
             setError("Invalid format!")
 
+
         }
         else {
             setError("");
+
 
         }
     }
@@ -56,14 +90,26 @@ function Gamescreen() {
                     Authorization: `Bearer ${token}`
                 }
             }).then(response => {
-                console.log(response.data);
+                axios.get(`http://localhost:5000/match/${matchId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }).then(response => {
+                    setApi(response.data);
+                    setObscuredword(response.data.word);
+                    setLives(response.data.remaining_lives);
+                    setDescription(response.data.description);
+
+                    console.log(response.data);
+                })
+
                 if (response.data.message === "correct guess") {
                     toast.success("Correct guess", {
                         position: "top-center",
                         autoClose: 5000,
                         hideProgressBar: false,
                         closeOnClick: true,
-                        pauseOnHover: true,
+                        pauseOnHover: false,
                         draggable: true,
                         progress: undefined,
                         theme: "light",
@@ -84,26 +130,56 @@ function Gamescreen() {
                     })
                 }
 
-            }).catch(error => {
-                if (error.response.status === 400) {
-                    toast.error("already guessed", {
+                else if (response.data.message === "You won!") {
+                    toast.success("You won", {
                         position: "top-center",
                         autoClose: 5000,
                         hideProgressBar: false,
                         closeOnClick: true,
-                        pauseOnHover: true,
+                        pauseOnHover: false,
+                        draggable: true,
+                        progress: undefined,
+                        theme: "light",
+                        transition: Bounce,
+                    });
+                    setIsMatchOver(true);
+
+                }
+
+                else if (response.data.message === "You lost!") {
+                    toast.error("You Lose", {
+                        position: "top-center",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: false,
+                        draggable: true,
+                        progress: undefined,
+                        theme: "light",
+                        transition: Bounce,
+                    });
+                    setIsMatchOver(true);
+                }
+
+
+            }).catch(error => {
+                console.log(error)
+                if (error.response.status === 400) {
+                    toast.error(error.response.data.message, {
+                        position: "top-center",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: false,
                         draggable: true,
                         progress: undefined,
                         theme: "light",
                         transition: Bounce,
                     })
+
                 }
-            })
-
+            });
     }
-
-
-
     return (
         <Container>
             <Typography variant="h2" display={"flex"}>Game Begins !</Typography>
@@ -114,8 +190,11 @@ function Gamescreen() {
             <br />
             <TextField variant="outlined" label="Enter a Guess" value={guess} onChange={handleGuesses} ></TextField>
             {guessError && <p style={{ color: 'red' }}>{guessError}</p>}
+            <br />
             <Button variant="contained" onClick={toggleSubmmit} disabled={!isValidGuess} >Submit </Button>
             <ToastContainer />
+            <br />
+            <Button variant="text" sx={{ alignContent: "center" }} onClick={() => navigate("/Mainmenu")} disabled={!isMatchOver} >Back to Main Menu</Button>
         </Container>
     )
 }
