@@ -1,6 +1,7 @@
 import { Button, Container, Slide, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { DataGrid } from '@mui/x-data-grid';
+import { useNavigate } from "react-router-dom";
 import axios from "axios"
 
 
@@ -10,6 +11,7 @@ function Mainmenu() {
     const [nameChecked, setNameChecked] = useState(false);
     const [rows, setRows] = useState([]);
     const [api, setAPI] = useState();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const menuTimeout = setTimeout(() => {
@@ -61,15 +63,11 @@ function Mainmenu() {
                 status: match.status,
                 word: match.word,
                 lives: match.remaining_lives
-
             }));
-
             setRows(matchData)
-
         })
 
     }
-
     const columns = [
 
         { field: 'matchId', headerName: "MATCH ID", width: 100 },
@@ -87,6 +85,10 @@ function Mainmenu() {
                         variant="text"
                         color="primary"
                         disabled={matchStatus(params.row.status)}
+                        onClick={() => {
+                            navigate(`/game/${params.row.matchId}`)
+                        }}
+
                     >
                         Continue
                     </Button>
@@ -96,8 +98,9 @@ function Mainmenu() {
     ];
 
 
-
-
+    function handleWordManagement() {
+        navigate("/wordManagement");
+    }
 
     if (!token) {
         return (
@@ -166,6 +169,15 @@ function Mainmenu() {
                     />
                 </div>
             )}
+            <br />
+            <Slide
+                direction="up" in={nameChecked}
+                mountOnEnter
+                unmountOnExit
+                timeout={{ enter: 500 }}
+            >
+                <Button variant="text" sx={{ border: 2 }} onClick={handleWordManagement} >Word Management</Button>
+            </Slide>
 
         </Container>
     );
