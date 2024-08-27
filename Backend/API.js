@@ -22,7 +22,7 @@ app.listen(5000, (req, res) => {
 });
 
 app.post("/user/register", async (req, res) => {
-    const role = "admin";
+    const role = "player";
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const passwordValidation = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
 
@@ -119,7 +119,7 @@ app.post("/match/:matchId/guess", async (req, res) => {
 
     const match = currentMatch[0];
     if (match.status != "running") {
-        res.status(400).json({ message: "Match Ended" })
+        return res.status(400).json({ message: "Match Ended" })
     }
     const isValidChar = isInputSingleCharAndLowerCaseEnglishCharOnly(guessWord.guess);
     if (!isValidChar) {
