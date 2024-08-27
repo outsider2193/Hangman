@@ -3,7 +3,7 @@ import axios from "axios"
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 import { Container, Typography, Button, TextField, Card, CardContent, Box } from "@mui/material"
-import { blueGrey } from "@mui/material/colors";
+
 function Login() {
 
     const [email, setEmail] = useState("");
@@ -12,7 +12,9 @@ function Login() {
 
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
+
     const navigate = useNavigate();
+
     const [formValid, setFormValid] = useState(JSON.parse(localStorage.getItem("authenticated")) || false);
 
     const [api, setAPI] = useState();
@@ -109,21 +111,37 @@ function Login() {
                 <Card
                     sx={{
                         width: '100%',
-                        bgcolor: "rgba(128, 128, 128, 0.2)",
-                        boxShadow: 'initial'
-
+                        maxWidth: 400,
+                        padding: "20px",
+                        bgcolor: "rgba(255, 255, 255, 0.1)",
+                        backdropFilter: "blur(10px)",
+                        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+                        border: "1px solid rgba(255, 255, 255, 0.3)",
+                        borderRadius: "12px",
                     }}>
                     <CardContent>
 
                         <Typography variant="h4" gutterBottom>Welcome to Hangman</Typography>
                         <p>Enter your email:</p>
-                        <TextField variant="outlined" label="Email" value={email} onChange={handleEmail} />
+                        <TextField variant="outlined"
+                            sx={{
+                                marginBottom: "16px",
+                                input: { color: 'black' },
+                                label: { color: '#ccc' }
+                            }}
+                            label="Email" value={email} onChange={handleEmail} />
                         {emailError && <p style={{ color: 'red' }}>{emailError}</p>}
 
                         <p>Enter password:</p>
                         <div>
                             <TextField
-                                variant="outlined" label="Password"
+                                variant="outlined"
+                                sx={{
+                                    marginBottom: "16px",
+                                    input: { color: 'black' },
+                                    label: { color: '#ccc' }
+                                }}
+                                label="Password"
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={handlePassword}
