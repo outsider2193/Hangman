@@ -1,4 +1,4 @@
-import { Button, Container, Slide, Typography } from "@mui/material";
+import { Button, Container, Slide, Typography, Box, Card, CardContent } from "@mui/material";
 import { useEffect, useState } from "react";
 import { DataGrid } from '@mui/x-data-grid';
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ function Mainmenu() {
     const [nameChecked, setNameChecked] = useState(false);
     const [rows, setRows] = useState([]);
     const [api, setAPI] = useState();
+    // const [playerRole, setRole] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -27,6 +28,15 @@ function Mainmenu() {
             clearTimeout(nameTimeout);
         };
     }, []);
+
+    // useEffect(() => {
+    //     if (!role == "admin") {
+    //         setRole(false);
+    //     }
+    //     else {
+    //         setRole(true);
+    //     }
+    // }, [playerRole]);
 
     function matchStatus(status) {
         return status !== "running";
@@ -48,6 +58,8 @@ function Mainmenu() {
     const decodedToken = JSON.parse(atob(arrayToken[1]));
     const firstName = decodedToken.firstName;
     const lastName = decodedToken.lastName;
+    const role = decodedToken.role;
+    console.log(decodedToken)
 
 
     function handleAllMatches() {
@@ -99,7 +111,10 @@ function Mainmenu() {
 
 
     function handleWordManagement() {
-        navigate("/wordManagement");
+        if (role === "admin") {
+            navigate("/wordManagement");
+        }
+
     }
 
     if (!token) {
@@ -116,72 +131,127 @@ function Mainmenu() {
 
 
     return (
-        <Container maxWidth="lg">
-            <Slide
-                direction="down"
-                in={menuChecked}
-                mountOnEnter
-                unmountOnExit
-                timeout={{ enter: 1000 }}
-            >
-                <Typography variant="h3" display={"flex"} >Main menu</Typography>
-            </Slide>
-            <br />
-            <Slide
-                direction="right"
-                in={nameChecked}
-                mountOnEnter
-                unmountOnExit
-                timeout={{ enter: 500 }}
-            >
-                <Typography variant="body1" style={{ wordWrap: "break-word" }}>
-                    Welcome {firstName} {lastName}
-                </Typography>
-            </Slide>
-            <Slide
-                direction="up" in={nameChecked}
-                mountOnEnter
-                unmountOnExit
-                timeout={{ enter: 500 }}
-            >
-                <Button variant="text" sx={{ border: 2 }} onClick={handleNewMatch} >Create new match </Button>
-            </Slide>
-            <br />
-            <Slide
-                direction="up" in={nameChecked}
-                mountOnEnter
-                unmountOnExit
-                timeout={{ enter: 500 }}
-            >
-                <Button variant="text" sx={{ border: 2 }} onClick={handleAllMatches}>Get current Matches</Button>
-            </Slide>
-            <br />
-            {rows.length > 0 && (
-                <div style={{ height: 600, width: '100%' }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        initialState={{
-                            pagination: {
-                                paginationModel: { page: 0, pageSize: 5 },
-                            },
-                        }}
-                    />
-                </div>
-            )}
-            <br />
-            <Slide
-                direction="up" in={nameChecked}
-                mountOnEnter
-                unmountOnExit
-                timeout={{ enter: 500 }}
-            >
-                <Button variant="text" sx={{ border: 2 }} onClick={handleWordManagement} >Word Management</Button>
-            </Slide>
-
-        </Container>
+        <Box
+            sx={{
+                height: "100vh",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "#f0f2f5", // Subtle background color
+                padding: 3,
+            }}
+        >
+            <Card sx={{ maxWidth: "800px", width: "100%", padding: 3, boxShadow: 3 }}>
+                <CardContent>
+                    <Container maxWidth="lg">
+                        <Slide
+                            direction="down"
+                            in={menuChecked}
+                            mountOnEnter
+                            unmountOnExit
+                            timeout={{ enter: 1000 }}
+                        >
+                            <Typography variant="h3" align="center" sx={{ fontWeight: "bold" }}>
+                                Main Menu
+                            </Typography>
+                        </Slide>
+                        <br />
+                        <Slide
+                            direction="right"
+                            in={nameChecked}
+                            mountOnEnter
+                            unmountOnExit
+                            timeout={{ enter: 500 }}
+                        >
+                            <Typography variant="h6" align="center">
+                                Welcome, {firstName} {lastName}
+                            </Typography>
+                        </Slide>
+                        <br />
+                        <Slide
+                            direction="up" in={nameChecked}
+                            mountOnEnter
+                            unmountOnExit
+                            timeout={{ enter: 500 }}
+                        >
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    display: "block",
+                                    margin: "10px auto",
+                                    transition: "transform 0.2s",
+                                    "&:hover": { transform: "scale(1.05)" }
+                                }}
+                                onClick={handleNewMatch}
+                            >
+                                Create New Match
+                            </Button>
+                        </Slide>
+                        <Slide
+                            direction="up" in={nameChecked}
+                            mountOnEnter
+                            unmountOnExit
+                            timeout={{ enter: 500 }}
+                        >
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    display: "block",
+                                    margin: "10px auto",
+                                    transition: "transform 0.2s",
+                                    "&:hover": { transform: "scale(1.05)" }
+                                }}
+                                onClick={handleAllMatches}
+                            >
+                                Get Current Matches
+                            </Button>
+                        </Slide>
+                        <br />
+                        {rows.length > 0 && (
+                            <Box sx={{ height: 600, width: '100%' }}>
+                                <DataGrid
+                                    rows={rows}
+                                    columns={columns}
+                                    initialState={{
+                                        pagination: {
+                                            paginationModel: { page: 0, pageSize: 5 },
+                                        },
+                                    }}
+                                    sx={{
+                                        "& .MuiDataGrid-columnHeaders": {
+                                            backgroundColor: "#e0e0e0"
+                                        }
+                                    }}
+                                />
+                            </Box>
+                        )}
+                        <br />
+                        {role === "admin" && (
+                            <Slide
+                                direction="up" in={nameChecked}
+                                mountOnEnter
+                                unmountOnExit
+                                timeout={{ enter: 500 }}
+                            >
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        display: "block",
+                                        margin: "10px auto",
+                                        transition: "transform 0.2s",
+                                        "&:hover": { transform: "scale(1.05)" }
+                                    }}
+                                    onClick={handleWordManagement}
+                                >
+                                    Word Management
+                                </Button>
+                            </Slide>
+                        )}
+                    </Container>
+                </CardContent>
+            </Card>
+        </Box>
     );
-
 }
 
 export default Mainmenu;

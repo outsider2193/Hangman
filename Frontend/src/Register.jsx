@@ -96,13 +96,10 @@ function Register() {
             axios.post("http://localhost:5000/user/register", userInfo).then(response => {
                 setAPI(response.data.token);
                 console.log(response.data);
-                localStorage.setItem('authToken', response.data.token);
-                console.log(localStorage);
                 setEmail("");
                 setPassword("");
                 setFirstName("");
                 setLastName("");
-                localStorage.setItem("authenticated", JSON.stringify(true));
                 navigate("/login");
             }).catch(error => {
                 if (error.response && error.response.status === 400) {
@@ -150,7 +147,7 @@ function Register() {
                     }}
                 >
                     <CardContent>
-                        <Typography variant="h4" sx={{ textAlign: "center" }} >Register to create new account</Typography>
+                        <Typography variant="h4" sx={{ textAlign: "center" }} >Create new account</Typography>
                         <br />
 
                         <TextField variant="outlined"
