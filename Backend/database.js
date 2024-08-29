@@ -328,6 +328,26 @@ async function updateScoreToDatabase(score, playerId) {
 
 }
 
+async function getMatchFromDatabase(playerId) {
+    let connection = await mySql.createConnection({
+        host: "localhost",
+        port: 3306,
+        user: "root",
+        password: "2024mysqlkushal",
+        database: "hangman",
+    });
+
+    try {
+        const [data] = await connection.execute(`SELECT * FROM \`match\` where player_id=?`, [playerId]);
+        return data;
+
+    } catch (err) {
+        console.error("Error executing query", err);
+    } finally {
+        await connection.end();
+    }
+}
+
 
 
 
@@ -336,5 +356,5 @@ module.exports = {
     readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
-    readUserFromDatabaseByEmail, readUserFromDatabase,updateScoreToDatabase
+    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase,getMatchFromDatabase
 };

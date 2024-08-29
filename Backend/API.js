@@ -1,10 +1,17 @@
 const cors = require("cors")
 const jwt = require('jsonwebtoken');
+//store secret key  in a safe location 
 const secretKey = 'your-very-secure-secret-key';
+// ********************************************* //
 const bcrypt = require("bcrypt");
+
+// salt is fixed
 const fixedSalt = "$2b$10$6cVYpoC1YmEYs1Hs9E2RJ."
+// ********************************************* //
 const express = require("express");
 const app = express();
+
+                    //need proper structure for imported functions
 const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
@@ -13,6 +20,7 @@ const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     getMatchFromDatabase } = require("./database");
 
 const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect, validateToken } = require("./hangman_utils");
+// ***********************************************************************************************************************************//
 
 app.use(express.json());
 app.use(cors());
@@ -48,12 +56,7 @@ app.post("/user/register", async (req, res) => {
 
     const hash = await bcrypt.hash(password, fixedSalt);
 
-
     const userInfo = { firstName, lastName, email, password: hash, role };
-
-
-
-
     const newUser = await addnewUsertoDatabase(userInfo);
     const { password: pwd, ...newUserWithoutPassword } = newUser;
 
@@ -84,6 +87,7 @@ app.post("/user/login", async (req, res) => {
     return res.status(401).json({ message: "Incorrect  Password" });
 })
 app.get("/match/new", async (req, res) => {
+      // Authorization token validation is repeated for every endpoint after this
     const decodedToken = validateToken(req.headers.authorization);
     if (decodedToken == null) {
         return res.status(401).json({ message: "Authorization token missing" })
@@ -107,6 +111,7 @@ app.get("/match/new", async (req, res) => {
 })
 
 app.post("/match/:matchId/guess", async (req, res) => {
+  
     const decodedToken = validateToken(req.headers.authorization);
     if (decodedToken == null) {
         return res.status(401).json({ message: "Authorization token missing" })
@@ -126,6 +131,8 @@ app.post("/match/:matchId/guess", async (req, res) => {
         return res.status(400).json({ message: "Invalid format!" })
     }
     const guessCheck = isGuessCorrect(match.word, guessWord.guess);
+
+    //This will read guesses that we will store in the database
     const guesses = await readGuessesFromDatabase(matchId)
     for (let i = 0; i < guesses.length; i++) {
         let arrOfStr = guesses[i].guess;
@@ -133,11 +140,17 @@ app.post("/match/:matchId/guess", async (req, res) => {
             return res.status(400).json({ message: "already guessed" })
         }
     }
+     //************************************************ */ 
+
+    //This will add new guesses to the database and update score by checking
     await addNewGuesstoDatabase(guessWord, matchId);
     const user = await readUserFromDatabase(decodedToken.userId);
     if (guessCheck) {
         user.score++;
         await updateScoreToDatabase(user.score, 1)
+    //************************************************ */   
+
+    //This will store the latest guess in an array to check if its correct or not
         const guesses = await readGuessesFromDatabase(matchId)
         const newGuess = [];
         for (let i = 0; i < guesses.length; i++) {
@@ -153,6 +166,7 @@ app.post("/match/:matchId/guess", async (req, res) => {
 
         return res.status(200).json({ message: "correct guess" });
     }
+    //*********************************************************************************/   
 
     else {
         user.score--;
@@ -225,6 +239,7 @@ app.get("/words", async (req, res) => {
     if (decodedToken == null) {
         return res.status(401).json({ message: "Authorization token missing" })
     }
+    //repeated for get,post,delete
     if (decodedToken.role != "admin") {
         return res.status(403).json({ message: "Only allowed for admins" })
     }
