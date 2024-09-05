@@ -11,10 +11,9 @@ async function addWordFromDatabase(word) {
     });
 
     try {
-        // const data = await connection.execute("insert into my_words (word,Description) values('" + word.word + "','" + word.description + "');");
-        const data = await connection.execute(`insert into word (word,description) values ('${word.word}', '${word.description}');`)
-        // rows=data[0];
-        // return rows;
+
+        const data = await connection.execute(`insert into word (word,description,difficulty) values ('${word.word}', '${word.description}','${word.difficulty}');`)
+
 
     } catch (err) {
         console.error("Error executing query", err);
@@ -40,7 +39,7 @@ async function deleteWordFromDatabase(word) {
     const [data] = await connection.execute('DELETE FROM word WHERE word=?', [word.word]);
     return data;
 }
-async function readWordsFromDatabase() {
+async function readWordsFromDatabase(difficulty) {
 
     let connection = await mySql.createConnection({
         host: "localhost",
@@ -50,10 +49,18 @@ async function readWordsFromDatabase() {
         database: "hangman",
     });
 
+
+
     try {
-        const data = await connection.execute("SELECT * from word;");
-        const rows = data[0];
-        // console.log(rows);
+        let query = "SELECT * from word";
+        let queryParams = [];
+
+        if (difficulty) {
+            query += " where difficulty = ?";
+            queryParams.push(difficulty);
+        }
+        const [rows] = await connection.execute(query, queryParams);
+        console.log("Fetched Words:", rows);
         return rows;
     } catch (err) {
         console.error("Error executing query", err);
@@ -91,7 +98,7 @@ async function wordExistsinDatabase(newWord) {
     }
 }
 
-async function getRandomWordObject() {
+async function getRandomWordObject(difficulty) {
     // return words[Math.floor(Math.random() * words.length)];
     let connection = await mySql.createConnection({
         host: "localhost",
@@ -102,7 +109,7 @@ async function getRandomWordObject() {
     });
 
     try {
-        const [rows] = await connection.execute("SELECT * FROM  word ORDER BY RAND() LIMIT 1; ");
+        const [rows] = await connection.execute("SELECT * FROM  word where difficulty=? ORDER BY RAND() LIMIT 1; ", [difficulty]);
         // console.log(rows[0]);
         return rows[0];
 
@@ -203,7 +210,7 @@ async function readGuessesFromDatabase(matchId) {
         database: "hangman",
     });
 
-    const data = await connection.execute(`select guess from  guesses where match_id=?`, [matchId],);
+    const data = await connection.execute(`select guess from  guesses where match_id=?`, [matchId]);
     return data[0];
 }
 
@@ -356,5 +363,5 @@ module.exports = {
     readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
-    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase,getMatchFromDatabase
+    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase, getMatchFromDatabase
 };
