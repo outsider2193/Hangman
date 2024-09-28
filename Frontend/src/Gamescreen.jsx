@@ -69,13 +69,9 @@ function Gamescreen() {
         const isValid = /^[a-z]$/;
         if (!isValid.test(value)) {
             setError("Invalid format!")
-
-
         }
         else {
             setError("");
-
-
         }
     }
     const isValidGuess = /^[a-z]$/.test(guess);
@@ -99,7 +95,6 @@ function Gamescreen() {
                     setObscuredword(response.data.word);
                     setLives(response.data.remaining_lives);
                     setDescription(response.data.description);
-
                     console.log(response.data);
                 })
 
@@ -115,6 +110,8 @@ function Gamescreen() {
                         theme: "light",
                         transition: Bounce,
                     });
+                    setGuess("");
+
                 }
                 else if (response.data.message === "Incorrect guess") {
                     toast.error("Incorrect guess", {
@@ -128,6 +125,7 @@ function Gamescreen() {
                         theme: "light",
                         transition: Bounce,
                     })
+                    setGuess("");
                 }
 
                 else if (response.data.message === "You won!") {
@@ -142,6 +140,7 @@ function Gamescreen() {
                         theme: "light",
                         transition: Bounce,
                     });
+                    setGuess("");
                     setIsMatchOver(true);
 
                 }
@@ -158,7 +157,9 @@ function Gamescreen() {
                         theme: "light",
                         transition: Bounce,
                     });
+
                     setIsMatchOver(true);
+                    setGuess("");
                 }
 
 
@@ -176,6 +177,7 @@ function Gamescreen() {
                         theme: "light",
                         transition: Bounce,
                     })
+                    setGuess("");
 
                 }
             });

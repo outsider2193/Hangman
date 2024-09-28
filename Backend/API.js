@@ -11,7 +11,7 @@ const fixedSalt = "$2b$10$6cVYpoC1YmEYs1Hs9E2RJ."
 const express = require("express");
 const app = express();
 
-                    //need proper structure for imported functions
+//need proper structure for imported functions
 const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     wordExistsinDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
@@ -86,20 +86,32 @@ app.post("/user/login", async (req, res) => {
 
     return res.status(401).json({ message: "Incorrect  Password" });
 })
-app.get("/match/new", async (req, res) => {
-      // Authorization token validation is repeated for every endpoint after this
+app.get("/match/new/:difficulty?", async (req, res) => {
+    // Authorization token validation is repeated for every endpoint after this
     const decodedToken = validateToken(req.headers.authorization);
     if (decodedToken == null) {
         return res.status(401).json({ message: "Authorization token missing" })
     }
-    const randomWord = await getRandomWordObject();
+
+    const { difficulty } = req.params;
+    const randomWord = await getRandomWordObject(difficulty || "medium");
     const obscuredWord = getObscuredWord(randomWord.word, [])
+    let lives;
+    if (difficulty === "easy") {
+        lives = 7;
+    }
+    else if (difficulty === "hard") {
+        lives = 2;
+    }
+    else {
+        lives = 5;
+    }
 
     const newMatch = {
         player_id: decodedToken.userId,
         word: randomWord.word,
         description: randomWord.description,
-        remaining_lives: 5,
+        remaining_lives: lives,
         status: "running"
     }
     const match = await addnewMatchToDatabase(newMatch);
@@ -111,7 +123,7 @@ app.get("/match/new", async (req, res) => {
 })
 
 app.post("/match/:matchId/guess", async (req, res) => {
-  
+
     const decodedToken = validateToken(req.headers.authorization);
     if (decodedToken == null) {
         return res.status(401).json({ message: "Authorization token missing" })
@@ -140,7 +152,7 @@ app.post("/match/:matchId/guess", async (req, res) => {
             return res.status(400).json({ message: "already guessed" })
         }
     }
-     //************************************************ */ 
+    //************************************************ */ 
 
     //This will add new guesses to the database and update score by checking
     await addNewGuesstoDatabase(guessWord, matchId);
@@ -148,9 +160,9 @@ app.post("/match/:matchId/guess", async (req, res) => {
     if (guessCheck) {
         user.score++;
         await updateScoreToDatabase(user.score, 1)
-    //************************************************ */   
+        //************************************************ */   
 
-    //This will store the latest guess in an array to check if its correct or not
+        //This will store the latest guess in an array to check if its correct or not
         const guesses = await readGuessesFromDatabase(matchId)
         const newGuess = [];
         for (let i = 0; i < guesses.length; i++) {
@@ -234,7 +246,7 @@ app.get("/home", (req, res) => {
     res.status(200).send("home page");
 })
 
-app.get("/words", async (req, res) => {
+app.get("/words/:difficulty?", async (req, res) => {
     const decodedToken = validateToken(req.headers.authorization);
     if (decodedToken == null) {
         return res.status(401).json({ message: "Authorization token missing" })
@@ -244,7 +256,8 @@ app.get("/words", async (req, res) => {
         return res.status(403).json({ message: "Only allowed for admins" })
     }
 
-    const words = await readWordsFromDatabase();
+    const { difficulty } = req.params;
+    const words = await readWordsFromDatabase(difficulty);
     res.status(200).json(words); return;
 });
 
@@ -257,16 +270,24 @@ app.post("/words", async (req, res) => {
         return res.status(403).json({ message: "Only allowed for admins" })
     }
 
-    const { word, description } = req.body;
+    const { word, description, difficulty } = req.body;
+    const validDifficulty = ["easy", "medium", "hard"];
+
+
+
     let regx = /^[a-z]+$/g;
 
     if (word && description && word.length >= 3 && regx.test(word)) {
+        if (!validDifficulty.includes(difficulty)) {
+            res.status(400).json({ message: "Invalid Difficulty" })
+        }
         const found = await wordExistsinDatabase(word);
         if (!found) {
 
             const newWordObject = {
                 word: word,
-                description: description
+                description: description,
+                difficulty: difficulty
             };
             await addWordFromDatabase(newWordObject);
             res.status(201).json({ message: 'Word added successfully' });

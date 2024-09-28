@@ -1,7 +1,8 @@
-import { Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, Typography } from "@mui/material";
+import { Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, InputLabel, Select, TextField, Typography, MenuItem } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import axios from "axios"
 import { useState, useEffect } from "react";
+// import Mainmenu from "./Mainmenu";
 
 function Wordmanagement() {
     const token = localStorage.getItem("authToken");
@@ -11,6 +12,7 @@ function Wordmanagement() {
     const [wordError, setWordError] = useState("");
     const [description, setDescription] = useState("");
     const [open, setOpen] = useState(false);
+    const [wordDifficulty, setWordDifficulty] = useState("medium");
 
     function openDialog() {
         setOpen(true);
@@ -25,7 +27,7 @@ function Wordmanagement() {
     }, []);
 
     function handleWords() {
-        axios.get("http://localhost:5000/words", {
+        axios.get(`http://localhost:5000/words/${wordDifficulty}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -66,6 +68,7 @@ function Wordmanagement() {
     }
 
     const isValid = /^[a-z]{3,}$/;
+
     function validateWord(event) {
         const value = event.target.value;
         setWord(value);
@@ -91,7 +94,8 @@ function Wordmanagement() {
     function addWords() {
         const data = {
             word: word,
-            description: description
+            description: description,
+            difficulty: wordDifficulty
         }
         axios.post("http://localhost:5000/words", data, {
             headers: {
@@ -148,6 +152,20 @@ function Wordmanagement() {
                         value={description}
                         onChange={addDescription}
                     />
+                    <FormControl sx={{ width: 100 }}>
+                        <InputLabel id="difficulty">select</InputLabel>
+                        <Select
+                            labelId="difficulty"
+                            id="difficulty setting"
+                            value={wordDifficulty}
+                            label="select"
+                            onChange={(event) => setWordDifficulty(event.target.value)}
+                        >
+                            <MenuItem value="easy">Easy</MenuItem>
+                            <MenuItem value="medium">Medium</MenuItem>
+                            <MenuItem value="hard">Hard</MenuItem>
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={closeDialog}>Cancel</Button>
