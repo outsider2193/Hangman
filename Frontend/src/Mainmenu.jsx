@@ -1,7 +1,7 @@
-import { Button, Container, Slide, Typography, Box, Card, CardContent } from "@mui/material";
+import { Button, Container, Slide, Typography, Box, Card, CardContent, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useEffect, useState } from "react";
 import { DataGrid } from '@mui/x-data-grid';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios"
 
 
@@ -11,8 +11,10 @@ function Mainmenu() {
     const [nameChecked, setNameChecked] = useState(false);
     const [rows, setRows] = useState([]);
     const [api, setAPI] = useState();
-    // const [playerRole, setRole] = useState(true);
+    const [gameDifficulty, setDifficulty] = useState('medium');
     const navigate = useNavigate();
+
+    // let { difficulty } = useParams();
 
     useEffect(() => {
         const menuTimeout = setTimeout(() => {
@@ -29,20 +31,12 @@ function Mainmenu() {
         };
     }, []);
 
-    // useEffect(() => {
-    //     if (!role == "admin") {
-    //         setRole(false);
-    //     }
-    //     else {
-    //         setRole(true);
-    //     }
-    // }, [playerRole]);
 
     function matchStatus(status) {
         return status !== "running";
     }
     function handleNewMatch() {
-        axios.get("http://localhost:5000/match/new", {
+        axios.get(`http://localhost:5000/match/new/${gameDifficulty}`, {
             headers: {
                 Authorization: `Bearer ${token}`
 
@@ -107,6 +101,7 @@ function Mainmenu() {
                 );
             }
         }
+
     ];
 
 
@@ -207,6 +202,20 @@ function Mainmenu() {
                             </Button>
                         </Slide>
                         <br />
+                        <FormControl sx={{ width: 200, marginBottom: 2, marginTop: 2 }}>
+                            <InputLabel id="difficulty">Select</InputLabel>
+                            <Select
+                                labelId="Select difficulty"
+                                id="difficulty setting"
+                                value={gameDifficulty}
+                                label="select"
+                                onChange={(event) => setDifficulty(event.target.value)}
+                            >
+                                <MenuItem value="easy">Easy difficulty</MenuItem>
+                                <MenuItem value="medium">Medium difficulty</MenuItem>
+                                <MenuItem value="hard">Hard difficulty</MenuItem>
+                            </Select>
+                        </FormControl>
                         {rows.length > 0 && (
                             <Box sx={{ height: 600, width: '100%' }}>
                                 <DataGrid

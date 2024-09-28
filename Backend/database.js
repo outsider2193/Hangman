@@ -12,7 +12,8 @@ async function addWordFromDatabase(word) {
 
     try {
 
-        const data = await connection.execute(`insert into word (word,description,difficulty) values ('${word.word}', '${word.description}','${word.difficulty}');`)
+        const data = await connection.execute('INSERT INTO word (word, description, difficulty) VALUES (?, ?, ?)', [word.word, word.description, word.difficulty]);
+
 
 
     } catch (err) {
@@ -197,7 +198,11 @@ async function readMatchFromDatabase(matchId) {
         database: "hangman",
     });
 
-    const data = await connection.execute(`select * from \`match\` where id= ?`, [matchId]);
+    const data = await connection.execute(`SELECT \`match\`.*, word.description 
+    FROM \`match\` 
+INNER JOIN word ON \`match\`.word = word.word 
+WHERE \`match\`.id = ?;
+`, [matchId]);
     return data[0];
 }
 
