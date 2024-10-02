@@ -133,8 +133,10 @@ app.post("/match/:matchId/guess", async (req, res) => {
     const { matchId } = req.params;
     const guessWord = { guess };
     const currentMatch = await readMatchFromDatabase(matchId);
-
-    const match = currentMatch[0];
+    if (!currentMatch) {
+        return res.status(404).json({ message: "Match not found" });
+    }
+    const match = currentMatch;
     if (match.status != "running") {
         return res.status(400).json({ message: "Match Ended" })
     }
@@ -157,6 +159,8 @@ app.post("/match/:matchId/guess", async (req, res) => {
     //This will add new guesses to the database and update score by checking
     await addNewGuesstoDatabase(guessWord, matchId);
     const user = await readUserFromDatabase(decodedToken.userId);
+  
+
     if (guessCheck) {
         user.score++;
         await updateScoreToDatabase(user.score, 1)
@@ -285,9 +289,9 @@ app.post("/words", async (req, res) => {
         if (!found) {
 
             const newWordObject = {
-                word: word,
-                description: description,
-                difficulty: difficulty
+                word,
+                description,
+                difficulty
             };
             await addWordFromDatabase(newWordObject);
             res.status(201).json({ message: 'Word added successfully' });
@@ -316,13 +320,20 @@ app.delete("/words/:word", async (req, res) => {
     const { word } = req.params;
 
     let wordFound = await wordExistsinDatabase(word);
+    try {
+        if (!wordFound) {
+            return res.status(404).json({ message: 'Word not found' });
+        }
 
-    if (!wordFound) {
-        return res.status(404).json({ message: 'Word not found' });
+
+        const deleteResult = await deleteWordFromDatabase(word);
+        if (deleteResult.deletedCount === 0) {
+            return res.status(404).json({ message: "Word not found or already deleted" });
+        }
+        return res.status(200).json({ message: "Word deleted successfully" });
+    } catch (err) {
+        return res.status(500).json({ message: "Internal server error" });
     }
-
-    await deleteWordFromDatabase({ "word": word });
-    return res.status(200).json({ message: "Word deleted" });
 
 
 
