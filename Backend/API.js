@@ -75,12 +75,14 @@ app.post("/user/login", async (req, res) => {
     }
     if (user.password == hashedPw) {
         const payload = {
-            userId: user.id,
+            userId: user._id.toString(),
             firstName: user.first_name,
             lastName: user.last_name,
             role: user.role
         };
+
         const token = jwt.sign(payload, secretKey, { expiresIn: '1y' });
+        console.log(payload);
         return res.status(200).json({ token });
     }
 
@@ -89,6 +91,7 @@ app.post("/user/login", async (req, res) => {
 app.get("/match/new/:difficulty?", async (req, res) => {
     // Authorization token validation is repeated for every endpoint after this
     const decodedToken = validateToken(req.headers.authorization);
+    console.log(decodedToken.userId);
     if (decodedToken == null) {
         return res.status(401).json({ message: "Authorization token missing" })
     }
@@ -114,6 +117,7 @@ app.get("/match/new/:difficulty?", async (req, res) => {
         remaining_lives: lives,
         status: "running"
     }
+
     const match = await addnewMatchToDatabase(newMatch);
     match.word = obscuredWord;
     match.description = randomWord.description;
@@ -133,8 +137,10 @@ app.post("/match/:matchId/guess", async (req, res) => {
     const { matchId } = req.params;
     const guessWord = { guess };
     const currentMatch = await readMatchFromDatabase(matchId);
-
-    const match = currentMatch[0];
+    if (!currentMatch) {
+        return res.status(404).json({ message: "Match not found" });
+    }
+    const match = currentMatch;
     if (match.status != "running") {
         return res.status(400).json({ message: "Match Ended" })
     }
@@ -157,9 +163,11 @@ app.post("/match/:matchId/guess", async (req, res) => {
     //This will add new guesses to the database and update score by checking
     await addNewGuesstoDatabase(guessWord, matchId);
     const user = await readUserFromDatabase(decodedToken.userId);
+
+
     if (guessCheck) {
         user.score++;
-        await updateScoreToDatabase(user.score, 1)
+        await updateScoreToDatabase(user.score, decodedToken.userId)
         //************************************************ */   
 
         //This will store the latest guess in an array to check if its correct or not
@@ -211,7 +219,7 @@ app.get("/match/:matchId", async (req, res) => {
         let arrOfStr = guesses[i].guess;
         newGuess.push(arrOfStr)
     }
-    const match = currentMatch[0];
+    const match = currentMatch;
     const obscuredWord = getObscuredWord(match.word, newGuess);
     match.word = obscuredWord;
     res.status(200).json(match);
@@ -227,7 +235,7 @@ app.get("/match", async (req, res) => {
     const obscuredMatches = [];
     for (let i = 0; i < matches.length; i++) {
         const currentMatch = matches[i];
-        const guesses = await readGuessesFromDatabase(currentMatch.id);
+        const guesses = await readGuessesFromDatabase(currentMatch._id.toString());
         const newGuess = [];
         for (let j = 0; j < guesses.length; j++) {
             let arrOfStr = guesses[j].guess;
@@ -285,9 +293,9 @@ app.post("/words", async (req, res) => {
         if (!found) {
 
             const newWordObject = {
-                word: word,
-                description: description,
-                difficulty: difficulty
+                word,
+                description,
+                difficulty
             };
             await addWordFromDatabase(newWordObject);
             res.status(201).json({ message: 'Word added successfully' });
@@ -316,13 +324,20 @@ app.delete("/words/:word", async (req, res) => {
     const { word } = req.params;
 
     let wordFound = await wordExistsinDatabase(word);
+    try {
+        if (!wordFound) {
+            return res.status(404).json({ message: 'Word not found' });
+        }
 
-    if (!wordFound) {
-        return res.status(404).json({ message: 'Word not found' });
+
+        const deleteResult = await deleteWordFromDatabase(word);
+        if (deleteResult.deletedCount === 0) {
+            return res.status(404).json({ message: "Word not found or already deleted" });
+        }
+        return res.status(200).json({ message: "Word deleted successfully" });
+    } catch (err) {
+        return res.status(500).json({ message: "Internal server error" });
     }
-
-    await deleteWordFromDatabase({ "word": word });
-    return res.status(200).json({ message: "Word deleted" });
 
 
 
