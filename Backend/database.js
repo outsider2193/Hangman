@@ -154,6 +154,9 @@ async function addnewUsertoDatabase(userInfo) {
 
         )
         const newUser = await collection.findOne({ _id: data.insertedId });
+        if (newUser) {
+            newUser._id = newUser._id.toString();
+        }
         return newUser;
     } catch (err) {
         console.error("Error executing query", err);
@@ -174,12 +177,81 @@ async function addnewUsertoDatabase(userInfo) {
 
 
 
+// async function readMatchFromDatabase(matchId) {
+//     try {
+
+//         await client.connect();
+//         const db = client.db(dbName);
+//         const collection = db.collection("matches");
+//         console.log(matchId);
+//         const data = await collection.aggregate([
+//             {
+//                 $match: { _id: new ObjectId(matchId) }
+
+//             },
+//             {
+//                 $lookup: {
+//                     from: "words",
+//                     localField: "word",
+//                     foreignField: "word",
+//                     as: "wordDetails"
+//                 }
+//             },
+
+//             { $unwind: "$wordDetails" },
+//             {
+//                 $lookup: {
+//                     from: "user",
+//                     localField: "player_id",
+//                     foreignField: "_id",
+//                     as: "userInfo"
+//                 }
+//             },
+//             {
+//                 $addFields: {
+//                     player_id: { $toObjectId: "$player_id" } // convert player_id to ObjectId
+//                 }
+//             },
+
+//             { $unwind: "$userInfo" },
+
+//             {
+//                 $project: {
+//                     _id: 1,
+//                     player_id: 1,
+//                     word: 1,
+//                     description: "$wordDetails.description",
+//                     remaining_lives: 1,
+//                     status: 1,
+//                     score: "$userInfo.score"
+
+//                 }
+//             }
+
+//         ]).toArray();
+//         const match = data[0];
+
+//         if (match) {
+//             match._id = match._id.toString();
+//             match.player_id = match.player_id.toString();
+//         }
+//         return match;
+//     } catch (error) {
+//         console.error("Error fetching match from mongoDB", error);
+//     } finally {
+//         await client.close();
+//     }
+// }
+
+
+
 async function readMatchFromDatabase(matchId) {
     try {
-
         await client.connect();
         const db = client.db(dbName);
         const collection = db.collection("matches");
+
+        console.log(matchId);
 
         const data = await collection.aggregate([
             {
@@ -194,6 +266,23 @@ async function readMatchFromDatabase(matchId) {
                 }
             },
             { $unwind: "$wordDetails" },
+
+            // Convert player_id to ObjectId before looking up the user collection
+            {
+                $addFields: {
+                    player_id: { $toObjectId: "$player_id" } // Ensure player_id is ObjectId
+                }
+            },
+            {
+                $lookup: {
+                    from: "user",
+                    localField: "player_id",
+                    foreignField: "_id",
+                    as: "userInfo"
+                }
+            },
+            { $unwind: "$userInfo" },
+
             {
                 $project: {
                     _id: 1,
@@ -201,21 +290,30 @@ async function readMatchFromDatabase(matchId) {
                     word: 1,
                     description: "$wordDetails.description",
                     remaining_lives: 1,
-                    status: "running",
-
+                    status: 1,
+                    score: "$userInfo.score"
                 }
             }
-
         ]).toArray();
-        // console.log("Aggregation result:", data);
 
-        return data[0];
+        const match = data[0];
+
+        if (match) {
+            match._id = match._id.toString();
+            match.player_id = match.player_id.toString();
+        }
+
+        return match;
+
     } catch (error) {
-        console.error("Error fetching match from mongoDB", error);
+        console.error("Error fetching match from MongoDB", error);
     } finally {
         await client.close();
     }
 }
+
+
+
 
 
 
@@ -271,9 +369,11 @@ async function readUserFromDatabase(playerId) {
         const db = client.db(dbName);
         const collection = db.collection("user");
 
-        const data = await collection.find({ _id: new ObjectId(playerId) }).toArray();
-        console.log("Query Result:", data);
-        return data[0];
+        const data = await collection.findOne({ _id: new ObjectId(playerId) });
+        if (data) {
+            data._id = data._id.toString();
+        }
+        return data;
     } catch (err) {
         console.error("Error executing query", err);
     } finally {
@@ -407,7 +507,7 @@ async function getMatchFromDatabase(playerId) {
         const db = client.db(dbName);
         const collection = db.collection("matches");
 
-        const data = await collection.find({ player_id: playerId })
+        const data = await collection.find({ player_id: playerId }).toArray();
         return data;
         // try {
         //     const [data] = await connection.execute(`SELECT * FROM \`match\` where player_id=?`, [playerId]);

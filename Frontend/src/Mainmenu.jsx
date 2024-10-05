@@ -32,6 +32,8 @@ function Mainmenu() {
     }, []);
 
 
+   
+
     function matchStatus(status) {
         return status !== "running";
     }
@@ -44,6 +46,7 @@ function Mainmenu() {
         }).then(response => {
             setAPI(response.data);
             console.log(response.data);
+            handleAllMatches();
         })
 
     }
@@ -64,7 +67,7 @@ function Mainmenu() {
         }).then(response => {
             const matchData = response.data.map((match, index) => ({
                 id: index + 1,
-                matchId: match.id,
+                matchId: match._id,
                 name: firstName,
                 status: match.status,
                 word: match.word,
