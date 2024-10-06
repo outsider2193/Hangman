@@ -1,7 +1,7 @@
 import { Button, Container, Slide, Typography, Box, Card, CardContent, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useEffect, useState } from "react";
 import { DataGrid } from '@mui/x-data-grid';
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios"
 
 
@@ -14,7 +14,7 @@ function Mainmenu() {
     const [gameDifficulty, setDifficulty] = useState('medium');
     const navigate = useNavigate();
 
-    // let { difficulty } = useParams();
+  
 
     useEffect(() => {
         const menuTimeout = setTimeout(() => {
@@ -32,7 +32,7 @@ function Mainmenu() {
     }, []);
 
 
-   
+
 
     function matchStatus(status) {
         return status !== "running";
@@ -113,6 +113,10 @@ function Mainmenu() {
             navigate("/wordManagement");
         }
 
+    }
+
+    function goToLeaderBoard() {
+        navigate("/leaderboard");
     }
 
     if (!token) {
@@ -202,6 +206,25 @@ function Mainmenu() {
                                 onClick={handleAllMatches}
                             >
                                 Get Current Matches
+                            </Button>
+                        </Slide>
+                        <Slide
+                            direction="up" in={nameChecked}
+                            mountOnEnter
+                            unmountOnExit
+                            timeout={{ enter: 500 }}
+                        >
+                            <Button
+                                variant="outlined"
+                                sx={{
+                                    display: "block",
+                                    margin: "10px auto",
+                                    transition: "transform 0.2s",
+                                    "&:hover": { transform: "scale(1.05)" }
+                                }}
+                                onClick={goToLeaderBoard}
+                            >
+                                Go to leaderboard
                             </Button>
                         </Slide>
                         <br />

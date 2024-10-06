@@ -17,7 +17,7 @@ const { addWordFromDatabase, readWordsFromDatabase, deleteWordFromDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
     readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase,
-    getMatchFromDatabase } = require("./database");
+    getMatchFromDatabase, getLeaderBoardFromDatabase } = require("./database");
 
 const { getObscuredWord, isInputSingleCharAndLowerCaseEnglishCharOnly, isGuessCorrect, validateToken } = require("./hangman_utils");
 // ***********************************************************************************************************************************//
@@ -248,6 +248,19 @@ app.get("/match", async (req, res) => {
 
     res.status(200).json(obscuredMatches);
 })
+
+app.get("/leaderboard", async (req, res) => {
+    const decodedToken = validateToken(req.headers.authorization);
+    if (decodedToken == null) {
+        return res.status(401).json({ message: "Authorization token missing" })
+    }
+    try {
+        const leaderboard = await getLeaderBoardFromDatabase();
+        res.status(200).json(leaderboard);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching leaderboard" });
+    }
+});
 
 
 app.get("/home", (req, res) => {
