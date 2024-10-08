@@ -267,10 +267,10 @@ async function readMatchFromDatabase(matchId) {
             },
             { $unwind: "$wordDetails" },
 
-            // Convert player_id to ObjectId before looking up the user collection
+
             {
                 $addFields: {
-                    player_id: { $toObjectId: "$player_id" } // Ensure player_id is ObjectId
+                    player_id: { $toObjectId: "$player_id" }
                 }
             },
             {
@@ -311,7 +311,6 @@ async function readMatchFromDatabase(matchId) {
         await client.close();
     }
 }
-
 
 
 
@@ -494,13 +493,6 @@ async function readUserFromDatabaseByEmail(email) {
     //     return rows.length > 0 ? rows[0] : null;
 }
 
-
-
-
-
-
-
-
 async function getMatchFromDatabase(playerId) {
     try {
         await client.connect();
@@ -520,6 +512,53 @@ async function getMatchFromDatabase(playerId) {
     }
 }
 
+async function getLeaderBoardFromDatabase() {
+    try {
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection("user");
+
+        const data = await collection.aggregate([
+
+            {
+                $addFields: {
+                    _id: { $toString: "$_id" }
+                }
+            },
+            {
+                $lookup: {
+                    from: "matches",
+                    localField: "_id",
+                    foreignField: "player_id",
+                    as: "playerMatches"
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    name: { $concat: ["$first_name", " ", "$last_name"] },
+                    score: 1,
+                    total_matches: { $size: "$playerMatches" }
+                }
+            },
+            {
+                $sort:
+                {
+                    score: -1
+
+                }
+            }
+        ]).toArray();
+        return data;
+    } catch (error) {
+        console.error("Error fetching data from MongoDB", error);
+    } finally {
+        await client.close();
+    }
+
+}
+
+
 
 
 
@@ -528,5 +567,6 @@ module.exports = {
     readWordsFromDatabase, getRandomWordObject, addnewMatchToDatabase,
     addnewUsertoDatabase, addNewGuesstoDatabase, readMatchFromDatabase,
     readGuessesFromDatabase, updateRemainingLivestoDatabase, updateStatustoDatabase,
-    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase, getMatchFromDatabase
+    readUserFromDatabaseByEmail, readUserFromDatabase, updateScoreToDatabase, getMatchFromDatabase,
+    getLeaderBoardFromDatabase
 };

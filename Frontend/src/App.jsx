@@ -4,6 +4,7 @@ import Login from "./Login"
 import Mainmenu from './Mainmenu';
 import Gamescreen from "./Gamescreen";
 import Wordmanagement from "./Wordmanagement";
+import Leaderboard from "./Leaderboard";
 import { ToastContainer } from 'react-toastify';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
@@ -18,6 +19,7 @@ function App() {
         <Route path="/Mainmenu" element={<Mainmenu />} />
         <Route path="/game/:matchId" element={<Gamescreen />} />
         <Route path="/wordManagement" element={<Wordmanagement />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
       </Routes>
       <ToastContainer />
     </Router>
