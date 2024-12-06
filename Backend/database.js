@@ -1,6 +1,8 @@
 // let mySql = require('mysql2/promise');
 const { MongoClient } = require('mongodb');
-const url = 'mongodb://localhost:27017';
+// const url = 'mongodb://localhost:27017';
+const url = 'mongodb://root:password@mongodb:27017';
+
 const client = new MongoClient(url);
 const dbName = 'hangman';
 const { ObjectId } = require('mongodb');

@@ -1,9 +1,8 @@
-import { Button, Container, Slide, Typography, Box, Card, CardContent, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Button, Container, Fade, Typography, Box, Card, CardContent, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useEffect, useState } from "react";
 import { DataGrid } from '@mui/x-data-grid';
 import { useNavigate } from "react-router-dom";
-import axios from "axios"
-
+import axios from "axios";
 
 function Mainmenu() {
     const token = localStorage.getItem("authToken");
@@ -14,16 +13,14 @@ function Mainmenu() {
     const [gameDifficulty, setDifficulty] = useState('medium');
     const navigate = useNavigate();
 
-  
-
     useEffect(() => {
         const menuTimeout = setTimeout(() => {
             setMenuChecked(true);
-        }, 500);
+        }, 300);
 
         const nameTimeout = setTimeout(() => {
             setNameChecked(true);
-        }, 1000);
+        }, 600);
 
         return () => {
             clearTimeout(menuTimeout);
@@ -31,24 +28,19 @@ function Mainmenu() {
         };
     }, []);
 
-
-
-
     function matchStatus(status) {
         return status !== "running";
     }
+
     function handleNewMatch() {
         axios.get(`http://localhost:5000/match/new/${gameDifficulty}`, {
             headers: {
                 Authorization: `Bearer ${token}`
-
             }
         }).then(response => {
             setAPI(response.data);
-            console.log(response.data);
             handleAllMatches();
-        })
-
+        });
     }
 
     const arrayToken = token.split('.');
@@ -56,8 +48,6 @@ function Mainmenu() {
     const firstName = decodedToken.firstName;
     const lastName = decodedToken.lastName;
     const role = decodedToken.role;
-    console.log(decodedToken)
-
 
     function handleAllMatches() {
         axios.get("http://localhost:5000/match", {
@@ -73,46 +63,37 @@ function Mainmenu() {
                 word: match.word,
                 lives: match.remaining_lives
             }));
-            setRows(matchData)
-        })
-
+            setRows(matchData);
+        });
     }
-    const columns = [
 
+    const columns = [
         { field: 'matchId', headerName: "MATCH ID", width: 100 },
         { field: 'name', headerName: "PLAYER NAME", width: 200 },
         { field: 'status', headerName: "STATUS", width: 150 },
-        { field: 'word', headerName: 'word', width: 150 },
+        { field: 'word', headerName: 'WORD', width: 150 },
         { field: 'lives', headerName: 'REMAINING LIVES', width: 170 },
         {
             field: 'action',
             headerName: 'ACTION',
             width: 150,
-            renderCell: (params) => {
-                return (
-                    <Button
-                        variant="text"
-                        color="primary"
-                        disabled={matchStatus(params.row.status)}
-                        onClick={() => {
-                            navigate(`/game/${params.row.matchId}`)
-                        }}
-
-                    >
-                        Continue
-                    </Button>
-                );
-            }
+            renderCell: (params) => (
+                <Button
+                    variant="contained"
+                    color="primary"
+                    disabled={matchStatus(params.row.status)}
+                    onClick={() => navigate(`/game/${params.row.matchId}`)}
+                >
+                    Continue
+                </Button>
+            )
         }
-
     ];
-
 
     function handleWordManagement() {
         if (role === "admin") {
             navigate("/wordManagement");
         }
-
     }
 
     function goToLeaderBoard() {
@@ -122,15 +103,12 @@ function Mainmenu() {
     if (!token) {
         return (
             <Container maxWidth='sm'>
-
                 <Typography variant="body2" style={{ wordWrap: "break-word" }}>
                     No authentication token found.
                 </Typography>
             </Container>
         );
     }
-
-
 
     return (
         <Box
@@ -139,111 +117,138 @@ function Mainmenu() {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                backgroundColor: "#f0f2f5", // Subtle background color
+                backgroundColor: "#1e1e2d", // Darker background for a game-like feel
                 padding: 3,
             }}
         >
-            <Card sx={{ maxWidth: "800px", width: "100%", padding: 3, boxShadow: 3 }}>
+            <Card sx={{
+                maxWidth: "800px",
+                width: "100%",
+                padding: 3,
+                boxShadow: 3,
+                backgroundColor: "#27293d", // Card background
+                color: "#fff" // Text color for better contrast
+            }}>
                 <CardContent>
                     <Container maxWidth="lg">
-                        <Slide
-                            direction="down"
-                            in={menuChecked}
-                            mountOnEnter
-                            unmountOnExit
-                            timeout={{ enter: 1000 }}
-                        >
-                            <Typography variant="h3" align="center" sx={{ fontWeight: "bold" }}>
+                        <Fade in={menuChecked} timeout={1000}>
+                            <Typography variant="h3" align="center" sx={{ fontWeight: "bold", color: "#f2a365" }}>
                                 Main Menu
                             </Typography>
-                        </Slide>
-                        <br />
-                        <Slide
-                            direction="right"
-                            in={nameChecked}
-                            mountOnEnter
-                            unmountOnExit
-                            timeout={{ enter: 500 }}
-                        >
-                            <Typography variant="h6" align="center">
+                        </Fade>
+                        <Fade in={nameChecked} timeout={1500}>
+                            <Typography variant="h6" align="center" sx={{ color: "#eaeaea" }}>
                                 Welcome, {firstName} {lastName}
                             </Typography>
-                        </Slide>
-                        <br />
-                        <Slide
-                            direction="up" in={nameChecked}
-                            mountOnEnter
-                            unmountOnExit
-                            timeout={{ enter: 500 }}
+                        </Fade>
+
+                        {/* Flexbox Container for alignment */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                marginTop: 4,
+                            }}
                         >
-                            <Button
-                                variant="contained"
+                            {/* Button Group */}
+                            <Box
                                 sx={{
-                                    display: "block",
-                                    margin: "10px auto",
-                                    transition: "transform 0.2s",
-                                    "&:hover": { transform: "scale(1.05)" }
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 2, // gap between buttons
+                                    alignItems: "center",
+                                    width: "100%"
                                 }}
-                                onClick={handleNewMatch}
                             >
-                                Create New Match
-                            </Button>
-                        </Slide>
-                        <Slide
-                            direction="up" in={nameChecked}
-                            mountOnEnter
-                            unmountOnExit
-                            timeout={{ enter: 500 }}
-                        >
-                            <Button
-                                variant="contained"
+                                <Fade in={nameChecked} timeout={2000}>
+                                    <Button
+                                        variant="contained"
+                                        sx={{
+                                            width: '50%',
+                                            backgroundColor: "#f2a365",
+                                            "&:hover": { backgroundColor: "#d98c54" }, // Hover effect
+                                        }}
+                                        onClick={handleNewMatch}
+                                    >
+                                        Create New Match
+                                    </Button>
+                                </Fade>
+                                <Fade in={nameChecked} timeout={2500}>
+                                    <Button
+                                        variant="contained"
+                                        sx={{
+                                            width: '50%',
+                                            backgroundColor: "#f2a365",
+                                            "&:hover": { backgroundColor: "#d98c54" } // Hover effect
+                                        }}
+                                        onClick={handleAllMatches}
+                                    >
+                                        Get Current Matches
+                                    </Button>
+                                </Fade>
+                                <Fade in={nameChecked} timeout={3000}>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{
+                                            width: '50%',
+                                            borderColor: "#f2a365",
+                                            color: "#f2a365",
+                                            "&:hover": { backgroundColor: "#f2a365", color: "#fff" } // Hover effect
+                                        }}
+                                        onClick={goToLeaderBoard}
+                                    >
+                                        Go to Leaderboard
+                                    </Button>
+                                </Fade>
+                            </Box>
+
+                            {/* Difficulty Select and Word Management Button */}
+                            <Box
                                 sx={{
-                                    display: "block",
-                                    margin: "10px auto",
-                                    transition: "transform 0.2s",
-                                    "&:hover": { transform: "scale(1.05)" }
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    width: "100%",
+                                    marginTop: 4,
                                 }}
-                                onClick={handleAllMatches}
                             >
-                                Get Current Matches
-                            </Button>
-                        </Slide>
-                        <Slide
-                            direction="up" in={nameChecked}
-                            mountOnEnter
-                            unmountOnExit
-                            timeout={{ enter: 500 }}
-                        >
-                            <Button
-                                variant="outlined"
-                                sx={{
-                                    display: "block",
-                                    margin: "10px auto",
-                                    transition: "transform 0.2s",
-                                    "&:hover": { transform: "scale(1.05)" }
-                                }}
-                                onClick={goToLeaderBoard}
-                            >
-                                Go to leaderboard
-                            </Button>
-                        </Slide>
-                        <br />
-                        <FormControl sx={{ width: 200, marginBottom: 2, marginTop: 2 }}>
-                            <InputLabel id="difficulty">Select</InputLabel>
-                            <Select
-                                labelId="Select difficulty"
-                                id="difficulty setting"
-                                value={gameDifficulty}
-                                label="select"
-                                onChange={(event) => setDifficulty(event.target.value)}
-                            >
-                                <MenuItem value="easy">Easy difficulty</MenuItem>
-                                <MenuItem value="medium">Medium difficulty</MenuItem>
-                                <MenuItem value="hard">Hard difficulty</MenuItem>
-                            </Select>
-                        </FormControl>
+                                <FormControl sx={{ width: 200 }}>
+                                    <InputLabel id="difficulty" sx={{ color: "#fff" }}>Select Difficulty</InputLabel>
+                                    <Select
+                                        labelId="difficulty"
+                                        id="difficulty-select"
+                                        value={gameDifficulty}
+                                        label="Select Difficulty"
+                                        onChange={(event) => setDifficulty(event.target.value)}
+                                        sx={{ color: "#fff", borderColor: "#fff" }}
+                                    >
+                                        <MenuItem value="easy">Easy</MenuItem>
+                                        <MenuItem value="medium">Medium</MenuItem>
+                                        <MenuItem value="hard">Hard</MenuItem>
+                                    </Select>
+                                </FormControl>
+
+                                {role === "admin" && (
+                                    <Fade in={nameChecked} timeout={3500}>
+                                        <Button
+                                            variant="contained"
+                                            sx={{
+                                                backgroundColor: "#f2a365",
+                                                "&:hover": { backgroundColor: "#d98c54" }, // Hover effect
+                                            }}
+                                            onClick={handleWordManagement}
+                                        >
+                                            Word Management
+                                        </Button>
+                                    </Fade>
+                                )}
+                            </Box>
+                        </Box>
+
+                        {/* Data Grid for Current Matches */}
                         {rows.length > 0 && (
-                            <Box sx={{ height: 600, width: '100%' }}>
+                            <Box sx={{ height: 600, width: '100%', marginTop: 4 }}>
                                 <DataGrid
                                     rows={rows}
                                     columns={columns}
@@ -254,33 +259,15 @@ function Mainmenu() {
                                     }}
                                     sx={{
                                         "& .MuiDataGrid-columnHeaders": {
-                                            backgroundColor: "#e0e0e0"
+                                            backgroundColor: "#2f2f3f",
+                                            color: "#1e1e2d"
+                                        },
+                                        "& .MuiDataGrid-cell": {
+                                            color: "#fff"
                                         }
                                     }}
                                 />
                             </Box>
-                        )}
-                        <br />
-                        {role === "admin" && (
-                            <Slide
-                                direction="up" in={nameChecked}
-                                mountOnEnter
-                                unmountOnExit
-                                timeout={{ enter: 500 }}
-                            >
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        display: "block",
-                                        margin: "10px auto",
-                                        transition: "transform 0.2s",
-                                        "&:hover": { transform: "scale(1.05)" }
-                                    }}
-                                    onClick={handleWordManagement}
-                                >
-                                    Word Management
-                                </Button>
-                            </Slide>
                         )}
                     </Container>
                 </CardContent>
